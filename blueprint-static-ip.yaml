@@ -1,0 +1,59 @@
+formatVersion: 1
+inputs:
+  hostname:
+    type: string
+    title: Host name
+    maxLength: 32
+    minLength: 4
+    pattern: '^[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$'
+  user:
+    type: string
+    title: User
+    minLength: 4
+    pattern: '^[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$'
+  password:
+    type: string
+    title: Password
+    encrypted: true
+    minLength: 8
+    maxLength: 12
+resources:
+  Cloud_Network_1:
+    type: Cloud.Network
+    properties:
+      networkType: existing
+      name: network2
+      constraints:
+        - tag: 'net:vlan30'
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    properties:
+      image: c7v6
+      flavor: small
+      networks:
+        - network: '${resource.Cloud_Network_1.id}'
+          assignment: static
+      cloudConfig: |
+        users:
+          - name: '${input.user}'
+            sudo:
+              - 'ALL=(ALL) NOPASSWD:ALL'
+            groups: sudo
+            shell: /bin/bash
+        runcmd:
+          - mkdir -p /tmp/test
+          - echo "Thaonv test" > /tmp/test/test.txt
+          - 'hostnamectl set-hostname ${input.hostname}'
+          - 'USER=${input.user}'
+          - 'PASS=${input.password}'
+          - 'echo $USER:$PASS | /usr/sbin/chpasswd'
+        network:
+          version: 1
+          config:
+            - type: physical
+              name: ens192
+              subnets: 
+                - type: static
+                  address: ${resource.Cloud_Machine_1.networks.address[0]}/${resource.Cloud_Network_1.prefixLength}
+                  gateway: ${resource.Cloud_Network_1.gateway}
+          
