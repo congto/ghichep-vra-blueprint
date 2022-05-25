@@ -47,6 +47,7 @@ resources:
           - 'USER=${input.user}'
           - 'PASS=${input.password}'
           - 'echo $USER:$PASS | /usr/sbin/chpasswd'
+          - service ssh reload
         network:
           version: 1
           config:
